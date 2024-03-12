@@ -1,40 +1,49 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
+import axios from 'axios';
 
-function App() {
-  const [data, setData] = useState([]);
-  
+function ProfileForm() {
+  const [id, setId] = useState('');
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [image, setImage] = useState(null);
 
-  useEffect(() => {
-    fetch('http://localhost:3001/users')
-      .then(res => res.json())
-      .then(data => setData(data)) // Update state with fetched data
-      .catch(err => console.log(err));
-  }, []);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    const formData = {
+      id,
+      name,
+      phone,
+      image: image ? await convertImageToBase64(image) : null
+    };
+
+    try {
+      await axios.post('http://localhost:5000/api/profiles', formData);
+      alert('Data submitted successfully!');
+    } catch (error) {
+      console.error('Error submitting data:', error);
+      alert('Error submitting data. Please try again.');
+    }
+  };
+
+  const convertImageToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result.split(',')[1]);
+      reader.onerror = (error) => reject(error);
+      reader.readAsDataURL(file);
+    });
+  };
 
   return (
-    <div style={{ padding: '50px' }}>
-      <table>
-        <thead>
-          <tr> {/* Corrected opening tag */}
-            <th>Id</th>
-            <th>Name</th>
-            <th>Phone</th> {/* Corrected casing */}
-            <th>Email</th>
-          </tr> {/* Corrected closing tag */}
-        </thead>
-        <tbody>
-          {data.map((d, i) => (
-            <tr key={i}>
-              <td>{d.id}</td>
-              <td>{d.name}</td>
-              <td>{d.phone}</td>
-              <td>{d.email}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <form onSubmit={handleSubmit}>
+      <input type="text" placeholder="ID" value={id} onChange={(e) => setId(e.target.value)} />
+      <input type="text" placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} />
+      <input type="text" placeholder="phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
+      <input type="file" onChange={(e) => setImage(e.target.files[0])} />
+      <button type="submit">Submit</button>
+    </form>
   );
 }
 
-export default App;
+export default ProfileForm;
